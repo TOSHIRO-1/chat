@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Responsive Chat App</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            background-color: #f2f2f2;
+            color: #333;
+        }
+
+        #chat-container {
+            width: 90%;
+            margin: 20px auto;
+            border: 1px solid #ccc;
+            padding: 10px;
+            max-height: 300px;
+            overflow-y: scroll;
+            background-color: #fff;
+        }
+
+        #message-input,
+        #pseudo-input,
+        #send-button {
+            margin-top: 10px;
+            padding: 8px;
+            font-size: 14px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        #message-input {
+            width: 70%;
+            margin-right: 5px;
+        }
+
+        #pseudo-input {
+            width: 30%;
+            margin-right: 5px;
+        }
+
+        #send-button {
+            background-color: #4caf50;
+            color: #fff;
+            cursor: pointer;
+        }
+
+        p {
+            padding: 10px;
+            border-radius: 5px;
+            margin: 5px 0;
+        }
+
+        p[data-pseudo="You"] {
+            background-color: #4caf50;
+            color: #fff;
+        }
+
+        p[data-pseudo="Anonymous"] {
+            background-color: #2196f3;
+            color: #fff;
+        }
+
+        p[data-pseudo="Google Translate"] {
+            background-color: #ff9800;
+            color: #fff;
+        }
+
+        @media only screen and (max-width: 600px) {
+            #message-input {
+                width: 60%;
+            }
+
+            #pseudo-input {
+                width: 40%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="chat-container" oncontextmenu="return false;"></div>
+    <div>
+        <input type="text" id="pseudo-input" placeholder="Choose your Pseudo">
+        <input type="text" id="message-input" placeholder="Type your message">
+        <button id="send-button" onclick="sendMessage()">Send</button>
+    </div>
+
+    <script>
+        let pseudo = localStorage.getItem('pseudo') || '';
+        let messages = JSON.parse(localStorage.getItem('messages')) || [];
+        const chatContainer = document.getElementById('chat-container');
+        const pseudoInput = document.getElementById('pseudo-input');
+        const messageInput = document.getElementById('message-input');
+
+        if (pseudo) {
+            pseudoInput.value = pseudo;
+            pseudoInput.disabled = true;
+        } else {
+            pseudoInput.addEventListener('change', function () {
+                pseudo = this.value || 'Anonymous';
+                localStorage.setItem('pseudo', pseudo);
+                this.disabled = true;
+            });
+        }
+
+        function renderMessages() {
+            chatContainer.innerHTML = '';
+            messages.forEach(msg => {
+                chatContainer.innerHTML += msg;
+            });
+        }
+
+        function sendMessage() {
+            const message = messageInput.value;
+
+            if (message.trim() !== '') {
+                const now = new Date();
+                const formattedDate = `${now.getHours()}:${now.getMinutes()}`;
+                const newMessage = `<p data-pseudo="${pseudo}"><strong>${pseudo}</strong> (${formattedDate}): ${message}</p>`;
+                messages.push(newMessage);
+                localStorage.setItem('messages', JSON.stringify(messages));
+                renderMessages();
+
+                // Translate the message and append it to the chat
+                translateMessage(message);
+                
+                messageInput.value = '';
+                setTimeout(() => {
+                    messageInput.focus();
+                }, 0);
+            }
+        }
+
+        function deleteMessage(event) {
+            event.preventDefault();
+            if (event.button === 2) { // Check if it's a right-click
+                const messageElement = event.target;
+                const messagePseudo = messageElement.getAttribute('data-pseudo');
+
+                if (messagePseudo === pseudo) {
+                    // Only allow deletion if the current user sent the message
+                    const messageIndex = messages.findIndex(msg => msg === messageElement.outerHTML);
+                    if (messageIndex !== -1) {
+                        messages.splice(messageIndex, 1);
+                        localStorage.setItem('messages', JSON.stringify(messages));
+                        renderMessages();
+                    }
+                }
+            }
+        }
+
+        function translateMessage(message) {
+            // Mocking Google Translate message for demonstration purposes
+            const now = new Date();
+            const formattedDate = `${now.getHours()}:${now.getMinutes()}`;
+            const translatedMessage = `<p data-pseudo="Google Translate"><strong>Google Translate</strong> (${formattedDate}): ${message} (Translated)</p>`;
+            messages.push(translatedMessage);
+            localStorage.setItem('messages', JSON.stringify(messages));
+            renderMessages();
+        }
+
+        function refreshPage() {
+            renderMessages();
+        }
+
+        // Initial rendering
+        renderMessages();
+
+        // Refresh every 3 seconds
+        setInterval(refreshPage, 3000);
+    </script>
+</body>
+</html>
